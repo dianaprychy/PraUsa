@@ -1,3 +1,4 @@
+# import raw csv data
 # 22-01-22
 #----------------------------
 
@@ -16,28 +17,32 @@ library(pwr)
 data<-read_excel("Daten.xlsx")
 #data<-read.csv(file = '')
 
-sample size
-effect size
-significance level = P(Type I error) = probability of finding an effect that is not there
-power = 1 - P(Type II error) = probability of finding an effect that is there
+#sample size
+#effect size
+#significance level = P(Type I error) = probability of finding an effect that is not there
+#power = 1 - P(Type II error) = probability of finding an effect that is there
 
+#Power-analyse
 pwr.anova.test(k = 3, n = , f = 0.25, sig.level = 0.05, power = 0.9)
 pwr.t.test(n = , d = 0.5, sig.level = 0.05, power = 0.9, type = "two.sample")
 
+#R items umkehren
 for(j in 1:ncol(data)){for(i in 1:nrow(data)){if(grepl("UEQhq",names(data)[j])|grepl("UEQatt2",names(data)[j])){data[[i,j]] <- 8-data[[i,j]]}}}
+#Daten transformieren
 for(j in 1:ncol(data)){for(i in 1:nrow(data)){if(grepl("ISO",names(data)[j])|grepl("UEQ",names(data)[j])){data[[i,j]] <- data[[i,j]]-4}}}
-data[grep(x = names(data), pattern = "ISOauf1")]
-data$Ttotal
+#data[grep(x = names(data), pattern = "ISOauf1")]
+#data$Ttotal
 
+#neue Kategorie: Agnes-Erfahrung JA oder NEIN
 data$Agneserfahrung <- ifelse(data$Erfahrung=="Agnes", "ja", "nein")
 
-mean(data$Alter)
-
+#subsets für Erfahrungs-Status
 tkeine <- subset(data,Erfahrung=="Keine")
 tagnes <- subset(data,Erfahrung=="Agnes")
 tandere <- subset(data,Erfahrung=="Andere")
 tanderekeine <- subset(data,Erfahrung=="Andere"|Erfahrung=="Keine")
 
+#Signifikanztest für Bearbeitungszeit nach Gruppen (gerichtet)
 shapiro.test(tkeine$Ttotal)  
 shapiro.test(tagnes$Ttotal)
 shapiro.test(tandere$Ttotal)
@@ -45,16 +50,18 @@ wilcox.test(tkeine$Ttotal, tagnes$Ttotal, alternative = "greater")
 wilcox.test(tandere$Ttotal, tagnes$Ttotal, alternative = "greater")
 wilcox.test(tanderekeine$Ttotal, tagnes$Ttotal, alternative = "greater")
 
-#Alter3 <- subset(data,Alter>27 & Alter<=33)
-#Alter4 <- subset(data,Alter>33)
+#Altersgruppen einführen und Verteilung plotten
 data$SG <- ifelse(data$Alter<=21, "16-21", ifelse(data$Alter>21 & data$Alter<=27, "22-27", ifelse(data$Alter>27 & data$Alter<=33, "28-33", "34+")))
 counts <- table(data$SG)
 barplot(counts,col="#69b3a2",
         xlab="Altersgruppe",ylab="Anzahl",beside=TRUE)
+
+#Gender-Verteilung plotten
 counts2 <- table(data$Geschlecht)
 barplot(counts2,col="#69b3a2",
         xlab="Gender",ylab="Anzahl",beside=TRUE)
 
+#Mittelwerte über die jeweils 5Items für die ISO-Gestaltungsprinzipienund UEQ-Faktoren bilden und in neue Spalte schreiben
 datAuf <- data[grep(x = names(data), pattern = "ISOauf")]
 data$misoauf<-rowMeans(datAuf[,-6],na.rm = TRUE)
 datSel <- data[grep(x = names(data), pattern = "ISOsel")]
@@ -76,7 +83,7 @@ data$mUEQpq<-rowMeans(datPQ,na.rm = TRUE)
 datHQ <- data[grep(x = names(data), pattern = "UEQhq")]
 data$mUEQhq<-rowMeans(datHQ,na.rm = TRUE)
 
-names(data)
+#Korrelation zw. den Faktoren (beider Tests)
 library(corrplot)
 #cor.plot(cor(data[c(67:76)],use ="pairwise.complete.obs"))
 M <- cor(data[c(67:76)],use ="pairwise.complete.obs")
@@ -97,36 +104,26 @@ pairs.panels(data[c(67:76)],
 
 corrplot.mixed(M,cl.lim = c(0.5, 1), is.corr = FALSE)
 
+#Datensatz mit ausgewählten Spalten 
 dataISO<-select(data, "ID", "SG","Geschlecht", "Erfahrung","Agneserfahrung","Ttotal",starts_with("miso"),"ISOauf6","ISOsel6","ISOerw6","ISOler6","ISOste6","ISOfehl6","ISOind6")
 dataUEQ<-select(data, "ID", "SG","Geschlecht", "Erfahrung","Agneserfahrung","Ttotal",starts_with("mUEQ"))
 
 datISO<-data[grep(x = names(data), pattern = "iso")]
 datUEQ<-data[grep(x = names(data), pattern = "mUEQ")]
 
-testmodel <- lm(Ttotal ~ Erfahrung, data = dataISO)
-summary(testmodel)
 
-library(ez)
-erg1<-ezANOVA(data = dataISO, # Datensatz
-              dv = Ttotal, # abh¨angige Variable
-              wid = ID, # Personenidentifikationsnummer
-              within_full = SG,
-              between = Erfahrung, # Gruppierungsfaktor
-              detailed = TRUE) # Quadratsummen anzeigen
 
-t.test(tkeine$Ttotal,tagnes$Ttotal)
-hist(datISO$misoauf)
-describe(datISO)
+#Verteilungen ansehen 
 multi.hist(datISO,xlim = c(-3,3),mar=c(2,2,1,1),freq = T,bcol="#69b3a2",main=c("Aufgabenangemessenheit","Selbstbeschreibungsfähigkeit","Erwartungskonformität","Lernförderlichkeit","Steuerbarkeit","Fehlertoleranz","Individualisierbarkeit"))
-multi.hist(cbind(datUEQ,datISO),freq = FALSE,bcol="#69b3a2",main=c("Attraktivität","PQ","HQ"))
 boxplot(datISO)
 pairs.panels(datISO, lm=TRUE, cor=TRUE, jiggle=T)
- ?multi.hist
+
+#Datensätze transformieren für Auswertung 
 stackedISO = stack(dataISO, select = grep(x = names(dataISO), pattern = "miso"))
 stackedISO6 = stack(dataISO, select = grep(x = names(dataISO), pattern = "ISO"))
 stackedUEQ = stack(dataUEQ, select = grep(x = names(dataUEQ), pattern = "mUEQ"))
-names(dataISO)
-data$SG
+
+#Plot für Bearbeitungszeit 
 ggplot(data, aes(x=Erfahrung, y=Ttotal))+geom_boxplot(width=0.6,lwd=0.7)+geom_jitter(width=0.1)+
   theme(axis.text.x = element_text(angle = 50, vjust = 1, hjust=1))+
   scale_y_continuous( expand = c(0,0), limits = c(0,500) )+
@@ -155,6 +152,7 @@ ggplot(data, aes(x=Erfahrung, y=Ttotal))+geom_boxplot(width=0.6,lwd=0.7)+geom_ji
                geom="errorbar", color="#69b3a2",width=0.2)+
   labs(y = "Bearbeitungszeit [s]")
 
+#Plot für ISO (alle 7 Faktoren)
 ggplot(stackedISO, aes(x=ind, y=values))+geom_boxplot(width=0.6,lwd=0.5)+geom_jitter(width=0.1)+
   theme(axis.text.x = element_text(angle = 50, vjust = 1, hjust=1))+
   scale_y_continuous( expand = c(0,0), limits = c(-3.1,3.1) )+
@@ -180,6 +178,8 @@ ggplot(stackedISO, aes(x=ind, y=values))+geom_boxplot(width=0.6,lwd=0.5)+geom_ji
   scale_x_discrete(labels=c("misoauf" = "Aufgabenangemessenheit","misosel" = "Selbstbeschreibungsfähigkeit","misoerw" = "Erwartungskonformität","misoler" = "Lernförderlichkeit","misoste" = "Steuerbarkeit","misofehl" = "Fehlertoleranz","misoind" = "Individualisierbarkeit"))+
   labs(y = "Bewertung", x = "Grundsätze der Dialoggestaltung")
 table(stackedISO6)
+
+#Plot für Wichtigkeit der ISO-Faktoren 
 ggplot(stackedISO6, aes(x=ind, y=values))+geom_boxplot(width=0.6,lwd=0.5)+geom_jitter(width=0.1)+
   theme(axis.text.x = element_text(angle = 50, vjust = 1, hjust=1))+
   scale_y_continuous( expand = c(0,0), limits = c(-3.25,3.25) )+
@@ -206,20 +206,7 @@ ggplot(stackedISO6, aes(x=ind, y=values))+geom_boxplot(width=0.6,lwd=0.5)+geom_j
   labs(y = "Bewertung", x = "Wichtigkeit der Grundsätze der Dialoggestaltung")
 
 
-
-ergAuf<-ezANOVA(data = dataISO, # Datensatz
-              dv = misoauf, # abh¨angige Variable
-              wid = ID, # Personenidentifikationsnummer
-              within_full = SG,
-              between = Erfahrung, # Gruppierungsfaktor
-              detailed = TRUE) # Quadratsummen anzeigen
-
-ergAuf2<-ezANOVA(data = dataISO, # Datensatz
-                dv = misoauf, # abh¨angige Variable
-                wid = ID, # Personenidentifikationsnummer
-                within_full = SG,
-                between = Agneserfahrung, # Gruppierungsfaktor
-                detailed = TRUE) # Quadratsummen anzeigen
+#Plots und Tests für ISO-Faktoren nach Gruppen 
 
 aufkeine <- subset(dataISO,Erfahrung=="Keine")
 aufagnes <- subset(dataISO,Erfahrung=="Agnes")
@@ -257,11 +244,6 @@ ggplot(dataISO, aes(x=Erfahrung, y=misoauf))+geom_boxplot(width=0.6,lwd=0.7)+geo
   geom="point", color="#69b3a2",size=1.7)+
   labs(y = "Aufgabenangemessenheit")
 
-ergSel<-ezANOVA(data = dataISO, # Datensatz
-                dv = mISOsel, # abh¨angige Variable
-                wid = ID, # Personenidentifikationsnummer
-                between = Erfahrung, # Gruppierungsfaktor
-                detailed = TRUE) # Quadratsummen anzeigen
 
 wilcox.test(aufandere$misosel, aufagnes$misosel, alternative = "greater")
 wilcox.test(aufkeine$misosel, aufagnes$misosel, alternative = "greater")
@@ -320,11 +302,6 @@ ggplot(dataISO, aes(x=Erfahrung, y=mIisoerw))+geom_boxplot(width=0.6,lwd=0.7)+ge
                fun.ymin = function(x) pmax(mean(x) - sd(x)), # calculating sd
                geom="errorbar", color="#69b3a2",width=0.2)
 
-ergLer<-ezANOVA(data = dataISO, # Datensatz
-                dv = mISOler, # abh¨angige Variable
-                wid = ID, # Personenidentifikationsnummer
-                between = Erfahrung, # Gruppierungsfaktor
-                detailed = TRUE) # Quadratsummen anzeigen
 
 wilcox.test(aufandere$misoler, aufagnes$misoler, alternative = "greater")
 wilcox.test(aufkeine$misoler, aufagnes$misoler, alternative = "greater")
@@ -445,6 +422,7 @@ ggplot(dataISO, aes(x=Erfahrung, y=misoind))+geom_boxplot(width=0.6,lwd=0.7)+geo
                fun.ymin = function(x) pmax(mean(x) - sd(x)), # calculating sd
                geom="errorbar", color="#69b3a2",width=0.2)
 
+#Plot der Faktoren des UEQ
 ggplot(stackedUEQ, aes(x=ind, y=values))+geom_boxplot(width=0.6,lwd=0.5)+geom_jitter(width=0.1)+
   theme(axis.text.x = element_text(angle = 50, vjust = 1, hjust=1))+
   scale_y_continuous( expand = c(0,0), limits = c(-3.2,3.2) )+
@@ -470,19 +448,8 @@ ggplot(stackedUEQ, aes(x=ind, y=values))+geom_boxplot(width=0.6,lwd=0.5)+geom_ji
   scale_x_discrete(labels=c("mUEQatt" = "Attraktivität","mUEQpq" = "Pragmatische Qualität","mUEQhq" = "Hedonische Qualität"))+
   labs(y = "Bewertung", x = "")
 
-ergAuf<-ezANOVA(data = dataISO, # Datensatz
-                dv = misoauf, # abh¨angige Variable
-                wid = ID, # Personenidentifikationsnummer
-                within_full = SG,
-                between = Erfahrung, # Gruppierungsfaktor
-                detailed = TRUE) # Quadratsummen anzeigen
 
-ergAuf2<-ezANOVA(data = dataISO, # Datensatz
-                 dv = misoauf, # abh¨angige Variable
-                 wid = ID, # Personenidentifikationsnummer
-                 within_full = SG,
-                 between = Agneserfahrung, # Gruppierungsfaktor
-                 detailed = TRUE) # Quadratsummen anzeigen
+#Plots und Tests für UEQ-Faktoren nach Gruppen 
 
 UEQkeine <- subset(dataUEQ,Erfahrung=="Keine")
 UEQagnes <- subset(dataUEQ,Erfahrung=="Agnes")
