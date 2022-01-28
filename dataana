@@ -1,0 +1,581 @@
+# 22-01-22
+#----------------------------
+
+rm(list=ls())
+# install.packages()
+libs<-c("tidyverse", "stringr")
+sapply(libs, require, character.only=TRUE)
+
+install.packages('pwr')
+library("readxl")
+library(psych)
+library(car)
+library(pwr)
+
+# load testing files
+data<-read_excel("Daten.xlsx")
+#data<-read.csv(file = '')
+
+sample size
+effect size
+significance level = P(Type I error) = probability of finding an effect that is not there
+power = 1 - P(Type II error) = probability of finding an effect that is there
+
+pwr.anova.test(k = 3, n = , f = 0.25, sig.level = 0.05, power = 0.9)
+pwr.t.test(n = , d = 0.5, sig.level = 0.05, power = 0.9, type = "two.sample")
+
+for(j in 1:ncol(data)){for(i in 1:nrow(data)){if(grepl("UEQhq",names(data)[j])|grepl("UEQatt2",names(data)[j])){data[[i,j]] <- 8-data[[i,j]]}}}
+for(j in 1:ncol(data)){for(i in 1:nrow(data)){if(grepl("ISO",names(data)[j])|grepl("UEQ",names(data)[j])){data[[i,j]] <- data[[i,j]]-4}}}
+data[grep(x = names(data), pattern = "ISOauf1")]
+data$Ttotal
+
+data$Agneserfahrung <- ifelse(data$Erfahrung=="Agnes", "ja", "nein")
+
+mean(data$Alter)
+
+tkeine <- subset(data,Erfahrung=="Keine")
+tagnes <- subset(data,Erfahrung=="Agnes")
+tandere <- subset(data,Erfahrung=="Andere")
+tanderekeine <- subset(data,Erfahrung=="Andere"|Erfahrung=="Keine")
+
+shapiro.test(tkeine$Ttotal)  
+shapiro.test(tagnes$Ttotal)
+shapiro.test(tandere$Ttotal)
+wilcox.test(tkeine$Ttotal, tagnes$Ttotal, alternative = "greater")
+wilcox.test(tandere$Ttotal, tagnes$Ttotal, alternative = "greater")
+wilcox.test(tanderekeine$Ttotal, tagnes$Ttotal, alternative = "greater")
+
+#Alter3 <- subset(data,Alter>27 & Alter<=33)
+#Alter4 <- subset(data,Alter>33)
+data$SG <- ifelse(data$Alter<=21, "16-21", ifelse(data$Alter>21 & data$Alter<=27, "22-27", ifelse(data$Alter>27 & data$Alter<=33, "28-33", "34+")))
+counts <- table(data$SG)
+barplot(counts,col="#69b3a2",
+        xlab="Altersgruppe",ylab="Anzahl",beside=TRUE)
+counts2 <- table(data$Geschlecht)
+barplot(counts2,col="#69b3a2",
+        xlab="Gender",ylab="Anzahl",beside=TRUE)
+
+datAuf <- data[grep(x = names(data), pattern = "ISOauf")]
+data$misoauf<-rowMeans(datAuf[,-6],na.rm = TRUE)
+datSel <- data[grep(x = names(data), pattern = "ISOsel")]
+data$misosel<-rowMeans(datSel[,-6],na.rm = TRUE)
+datErw <- data[grep(x = names(data), pattern = "ISOerw")]
+data$misoerw<-rowMeans(datErw[,-6],na.rm = TRUE)
+datLer <- data[grep(x = names(data), pattern = "ISOler")]
+data$misoler<-rowMeans(datLer[,-6],na.rm = TRUE)
+datSte <- data[grep(x = names(data), pattern = "ISOste")]
+data$misoste<-rowMeans(datSte[,-6],na.rm = TRUE)
+datFehl <- data[grep(x = names(data), pattern = "ISOfehl")]
+data$misofehl<-rowMeans(datFehl[,-6],na.rm = TRUE)
+datInd <- data[grep(x = names(data), pattern = "ISOind")]
+data$misoind<-rowMeans(datInd[,-6],na.rm = TRUE)
+datAtt <- data[grep(x = names(data), pattern = "UEQatt")]
+data$mUEQatt<-rowMeans(datAtt,na.rm = TRUE)
+datPQ <- data[grep(x = names(data), pattern = "UEQpq")]
+data$mUEQpq<-rowMeans(datPQ,na.rm = TRUE)
+datHQ <- data[grep(x = names(data), pattern = "UEQhq")]
+data$mUEQhq<-rowMeans(datHQ,na.rm = TRUE)
+
+names(data)
+library(corrplot)
+#cor.plot(cor(data[c(67:76)],use ="pairwise.complete.obs"))
+M <- cor(data[c(67:76)],use ="pairwise.complete.obs")
+colnames(M) <- c("ISOauf", "ISOsel", "ISOerw", "ISOler", "ISOste","ISOfehl","ISOind","UEQatt","UEQpq","UEQhq")
+rownames(M) <- c("ISOauf", "ISOsel", "ISOerw", "ISOler", "ISOste","ISOfehl","ISOind","UEQatt","UEQpq","UEQhq")
+corrplot(M,cl.lim = c(-1, 1), is.corr = FALSE)
+
+pairs.panels(data[c(67:76)], lm=TRUE, cor=TRUE, jiggle=T)
+
+pairs.panels(data[c(67:76)], 
+             method = "pearson", # correlation method
+             hist.col = "#69b3a2",
+             labels = c("ISOauf", "ISOsel", "ISOerw", "ISOler", "ISOste","ISOfehl","ISOind","UEQatt","UEQpq","UEQhq"),
+             lm=TRUE,
+             density = TRUE,  # show density plots
+             ellipses = TRUE # show correlation ellipses
+)
+
+corrplot.mixed(M,cl.lim = c(0.5, 1), is.corr = FALSE)
+
+dataISO<-select(data, "ID", "SG","Geschlecht", "Erfahrung","Agneserfahrung","Ttotal",starts_with("miso"),"ISOauf6","ISOsel6","ISOerw6","ISOler6","ISOste6","ISOfehl6","ISOind6")
+dataUEQ<-select(data, "ID", "SG","Geschlecht", "Erfahrung","Agneserfahrung","Ttotal",starts_with("mUEQ"))
+
+datISO<-data[grep(x = names(data), pattern = "iso")]
+datUEQ<-data[grep(x = names(data), pattern = "mUEQ")]
+
+testmodel <- lm(Ttotal ~ Erfahrung, data = dataISO)
+summary(testmodel)
+
+library(ez)
+erg1<-ezANOVA(data = dataISO, # Datensatz
+              dv = Ttotal, # abh¨angige Variable
+              wid = ID, # Personenidentifikationsnummer
+              within_full = SG,
+              between = Erfahrung, # Gruppierungsfaktor
+              detailed = TRUE) # Quadratsummen anzeigen
+
+t.test(tkeine$Ttotal,tagnes$Ttotal)
+hist(datISO$misoauf)
+describe(datISO)
+multi.hist(datISO,xlim = c(-3,3),mar=c(2,2,1,1),freq = T,bcol="#69b3a2",main=c("Aufgabenangemessenheit","Selbstbeschreibungsfähigkeit","Erwartungskonformität","Lernförderlichkeit","Steuerbarkeit","Fehlertoleranz","Individualisierbarkeit"))
+multi.hist(cbind(datUEQ,datISO),freq = FALSE,bcol="#69b3a2",main=c("Attraktivität","PQ","HQ"))
+boxplot(datISO)
+pairs.panels(datISO, lm=TRUE, cor=TRUE, jiggle=T)
+ ?multi.hist
+stackedISO = stack(dataISO, select = grep(x = names(dataISO), pattern = "miso"))
+stackedISO6 = stack(dataISO, select = grep(x = names(dataISO), pattern = "ISO"))
+stackedUEQ = stack(dataUEQ, select = grep(x = names(dataUEQ), pattern = "mUEQ"))
+names(dataISO)
+data$SG
+ggplot(data, aes(x=Erfahrung, y=Ttotal))+geom_boxplot(width=0.6,lwd=0.7)+geom_jitter(width=0.1)+
+  theme(axis.text.x = element_text(angle = 50, vjust = 1, hjust=1))+
+  scale_y_continuous( expand = c(0,0), limits = c(0,500) )+
+  stat_summary(
+    fun.data = function(x) {
+      m <- mean(x)
+      sd <- sd(x)
+      
+      c(y    = m,
+        ymin = m,
+        ymax = m)
+    }, 
+    geom="errorbar", color="#69b3a2",width=0.6, size=0.6,linetype = 1)+
+  stat_summary(fun.data = function(x) {
+    m <- mean(x)
+    sd <- sd(x)
+    
+    c(y    = m,
+      ymin = m,
+      ymax = m)
+  }, 
+  geom="point", color="#69b3a2",size=1.7)+
+  stat_summary(fun.y = "mean", 
+               fun.ymax = function(x) mean(x) + sd(x), # calculating sd
+               fun.ymin = function(x) pmax(mean(x) - sd(x)), # calculating sd
+               geom="errorbar", color="#69b3a2",width=0.2)+
+  labs(y = "Bearbeitungszeit [s]")
+
+ggplot(stackedISO, aes(x=ind, y=values))+geom_boxplot(width=0.6,lwd=0.5)+geom_jitter(width=0.1)+
+  theme(axis.text.x = element_text(angle = 50, vjust = 1, hjust=1))+
+  scale_y_continuous( expand = c(0,0), limits = c(-3.1,3.1) )+
+  stat_summary(
+    fun.data = function(x) {
+      m <- mean(x)
+      sd <- sd(x)
+      
+      c(y    = m,
+        ymin = m,
+        ymax = m)
+    }, 
+    geom="errorbar", color="#69b3a2",width=0.6, size=0.6,linetype = 1)+
+  stat_summary(fun.data = function(x) {
+        m <- mean(x)
+        sd <- sd(x)
+        
+        c(y    = m,
+          ymin = m,
+          ymax = m)
+      }, 
+      geom="point", color="#69b3a2",size=1.7)+
+  scale_x_discrete(labels=c("misoauf" = "Aufgabenangemessenheit","misosel" = "Selbstbeschreibungsfähigkeit","misoerw" = "Erwartungskonformität","misoler" = "Lernförderlichkeit","misoste" = "Steuerbarkeit","misofehl" = "Fehlertoleranz","misoind" = "Individualisierbarkeit"))+
+  labs(y = "Bewertung", x = "Grundsätze der Dialoggestaltung")
+table(stackedISO6)
+ggplot(stackedISO6, aes(x=ind, y=values))+geom_boxplot(width=0.6,lwd=0.5)+geom_jitter(width=0.1)+
+  theme(axis.text.x = element_text(angle = 50, vjust = 1, hjust=1))+
+  scale_y_continuous( expand = c(0,0), limits = c(-3.25,3.25) )+
+  stat_summary(
+    fun.data = function(x) {
+      m <- mean(x)
+      sd <- sd(x)
+      
+      c(y    = m,
+        ymin = m,
+        ymax = m)
+    }, 
+    geom="errorbar", color="#69b3a2",width=0.6, size=0.6,linetype = 1)+
+  stat_summary(fun.data = function(x) {
+    m <- mean(x)
+    sd <- sd(x)
+    
+    c(y    = m,
+      ymin = m,
+      ymax = m)
+  }, 
+  geom="point", color="#69b3a2",size=1.7)+
+  scale_x_discrete(labels=c("ISOauf6" = "Aufgabenangemessenheit","ISOsel6" = "Selbstbeschreibungsfähigkeit","ISOerw6" = "Erwartungskonformität","ISOler6" = "Lernförderlichkeit","ISOste6" = "Steuerbarkeit","ISOfehl6" = "Fehlertoleranz","ISOind6" = "Individualisierbarkeit"))+
+  labs(y = "Bewertung", x = "Wichtigkeit der Grundsätze der Dialoggestaltung")
+
+
+
+ergAuf<-ezANOVA(data = dataISO, # Datensatz
+              dv = misoauf, # abh¨angige Variable
+              wid = ID, # Personenidentifikationsnummer
+              within_full = SG,
+              between = Erfahrung, # Gruppierungsfaktor
+              detailed = TRUE) # Quadratsummen anzeigen
+
+ergAuf2<-ezANOVA(data = dataISO, # Datensatz
+                dv = misoauf, # abh¨angige Variable
+                wid = ID, # Personenidentifikationsnummer
+                within_full = SG,
+                between = Agneserfahrung, # Gruppierungsfaktor
+                detailed = TRUE) # Quadratsummen anzeigen
+
+aufkeine <- subset(dataISO,Erfahrung=="Keine")
+aufagnes <- subset(dataISO,Erfahrung=="Agnes")
+aufandere <- subset(dataISO,Erfahrung=="Andere")
+aufanderekeine <- subset(dataISO,Erfahrung=="Andere"|Erfahrung=="Keine")
+
+shapiro.test(aufanderekeine$misoauf)
+shapiro.test(aufagnes$misoauf)
+
+wilcox.test(aufkeine$misoauf, aufagnes$misoauf, alternative = "greater")
+wilcox.test(aufandere$misoauf, aufagnes$misoauf, alternative = "greater")
+wilcox.test(aufanderekeine$misoauf, aufagnes$misoauf, alternative = "greater")
+
+ggplot(dataISO, aes(x=Erfahrung, y=misoauf))+geom_boxplot(width=0.6,lwd=0.7)+geom_jitter(width=0.1)+
+  theme(axis.text.x = element_text(angle = 50, vjust = 1, hjust=1))+
+  scale_y_continuous( expand = c(0,0), limits = c(-3.2,3.2) )+
+  stat_summary(
+    fun.data = function(x) {
+      m <- mean(x)
+      sd <- sd(x)
+      
+      c(y    = m,
+        ymin = m,
+        ymax = m)
+    }, 
+    geom="errorbar", color="#69b3a2",width=0.6, size=0.6,linetype = 1)+
+  stat_summary(fun.data = function(x) {
+    m <- mean(x)
+    sd <- sd(x)
+    
+    c(y    = m,
+      ymin = m,
+      ymax = m)
+  }, 
+  geom="point", color="#69b3a2",size=1.7)+
+  labs(y = "Aufgabenangemessenheit")
+
+ergSel<-ezANOVA(data = dataISO, # Datensatz
+                dv = mISOsel, # abh¨angige Variable
+                wid = ID, # Personenidentifikationsnummer
+                between = Erfahrung, # Gruppierungsfaktor
+                detailed = TRUE) # Quadratsummen anzeigen
+
+wilcox.test(aufandere$misosel, aufagnes$misosel, alternative = "greater")
+wilcox.test(aufkeine$misosel, aufagnes$misosel, alternative = "greater")
+
+ggplot(dataISO, aes(x=Erfahrung, y=misosel))+geom_boxplot(width=0.6,lwd=0.7)+geom_jitter(width=0.1)+
+  theme(axis.text.x = element_text(angle = 50, vjust = 1, hjust=1))+
+  stat_summary(
+    fun.data = function(x) {
+      m <- mean(x)
+      sd <- sd(x)
+      
+      c(y    = m,
+        ymin = m,
+        ymax = m)
+    }, 
+    geom="errorbar", color="#69b3a2",width=0.6, size=0.6,linetype = 1)+
+  stat_summary(fun.data = function(x) {
+    m <- mean(x)
+    sd <- sd(x)
+    
+    c(y    = m,
+      ymin = m,
+      ymax = m)
+  }, 
+  geom="point", color="#69b3a2",size=1.7)+
+  labs(y = "Selbstbeschreibungsfähigkeit")
+
+
+wilcox.test(aufandere$misoerw, aufagnes$misoerw, alternative = "greater")
+wilcox.test(aufkeine$misoerw, aufagnes$misoerw, alternative = "greater")
+
+ggplot(dataISO, aes(x=Erfahrung, y=mIisoerw))+geom_boxplot(width=0.6,lwd=0.7)+geom_jitter(width=0.1)+
+  theme(axis.text.x = element_text(angle = 50, vjust = 1, hjust=1))+
+  stat_summary(
+    fun.data = function(x) {
+      m <- mean(x)
+      sd <- sd(x)
+      
+      c(y    = m,
+        ymin = m,
+        ymax = m)
+    }, 
+    geom="errorbar", color="#69b3a2",width=0.6, size=0.6,linetype = 1)+
+  stat_summary(fun.data = function(x) {
+    m <- mean(x)
+    sd <- sd(x)
+    
+    c(y    = m,
+      ymin = m,
+      ymax = m)
+  }, 
+  geom="point", color="#69b3a2",size=1.7)+
+  labs(y = "Erwratungskonformität")+
+  stat_summary(fun.y = "mean", 
+               fun.ymax = function(x) mean(x) + sd(x), # calculating sd
+               fun.ymin = function(x) pmax(mean(x) - sd(x)), # calculating sd
+               geom="errorbar", color="#69b3a2",width=0.2)
+
+ergLer<-ezANOVA(data = dataISO, # Datensatz
+                dv = mISOler, # abh¨angige Variable
+                wid = ID, # Personenidentifikationsnummer
+                between = Erfahrung, # Gruppierungsfaktor
+                detailed = TRUE) # Quadratsummen anzeigen
+
+wilcox.test(aufandere$misoler, aufagnes$misoler, alternative = "greater")
+wilcox.test(aufkeine$misoler, aufagnes$misoler, alternative = "greater")
+
+ggplot(dataISO, aes(x=Erfahrung, y=misoler))+geom_boxplot(width=0.6,lwd=0.7)+geom_jitter(width=0.1)+
+  theme(axis.text.x = element_text(angle = 50, vjust = 1, hjust=1))+
+  scale_y_continuous( expand = c(0,0), limits = c(-3.2,3.2) )+
+  stat_summary(
+    fun.data = function(x) {
+      m <- mean(x)
+      sd <- sd(x)
+      
+      c(y    = m,
+        ymin = m,
+        ymax = m)
+    }, 
+    geom="errorbar", color="#69b3a2",width=0.6, size=0.6,linetype = 1)+
+  stat_summary(fun.data = function(x) {
+    m <- mean(x)
+    sd <- sd(x)
+    
+    c(y    = m,
+      ymin = m,
+      ymax = m)
+  }, 
+  geom="point", color="#69b3a2",size=1.7)+
+  labs(y = "Lernfähigkeit")
+
+
+wilcox.test(aufandere$misoste, aufagnes$misoste, alternative = "greater")
+wilcox.test(aufkeine$misoste, aufagnes$misoste, alternative = "greater")
+
+ggplot(dataISO, aes(x=Erfahrung, y=misoste))+geom_boxplot(width=0.6,lwd=0.7)+geom_jitter(width=0.1)+
+  theme(axis.text.x = element_text(angle = 50, vjust = 1, hjust=1))+
+  stat_summary(
+    fun.data = function(x) {
+      m <- mean(x)
+      sd <- sd(x)
+      
+      c(y    = m,
+        ymin = m,
+        ymax = m)
+    }, 
+    geom="errorbar", color="#69b3a2",width=0.6, size=0.6,linetype = 1)+
+  stat_summary(fun.data = function(x) {
+    m <- mean(x)
+    sd <- sd(x)
+    
+    c(y    = m,
+      ymin = m,
+      ymax = m)
+  }, 
+  geom="point", color="#69b3a2",size=1.7)+
+  labs(y = "Steuerbarkeit")+
+  stat_summary(fun.y = "mean", 
+               fun.ymax = function(x) mean(x) + sd(x), # calculating sd
+               fun.ymin = function(x) pmax(mean(x) - sd(x)), # calculating sd
+               geom="errorbar", color="#69b3a2",width=0.2)
+
+
+wilcox.test(aufandere$misofehl, aufagnes$misofehl, alternative = "greater")
+wilcox.test(aufkeine$misofehl, aufagnes$misofehl, alternative = "greater")
+
+ggplot(dataISO, aes(x=Erfahrung, y=misofehl))+geom_boxplot(width=0.6,lwd=0.7)+geom_jitter(width=0.1)+
+  theme(axis.text.x = element_text(angle = 50, vjust = 1, hjust=1))+
+  stat_summary(
+    fun.data = function(x) {
+      m <- mean(x)
+      sd <- sd(x)
+      
+      c(y    = m,
+        ymin = m,
+        ymax = m)
+    }, 
+    geom="errorbar", color="#69b3a2",width=0.6, size=0.6,linetype = 1)+
+  stat_summary(fun.data = function(x) {
+    m <- mean(x)
+    sd <- sd(x)
+    
+    c(y    = m,
+      ymin = m,
+      ymax = m)
+  }, 
+  geom="point", color="#69b3a2",size=1.7)+
+  labs(y = "Fehlertoleranz")+
+  stat_summary(fun.y = "mean", 
+               fun.ymax = function(x) mean(x) + sd(x), # calculating sd
+               fun.ymin = function(x) pmax(mean(x) - sd(x)), # calculating sd
+               geom="errorbar", color="#69b3a2",width=0.2)
+
+wilcox.test(aufandere$misoind, aufagnes$misoind, alternative = "greater")
+wilcox.test(aufkeine$misoind, aufagnes$misoind, alternative = "greater")
+
+ggplot(dataISO, aes(x=Erfahrung, y=misoind))+geom_boxplot(width=0.6,lwd=0.7)+geom_jitter(width=0.1)+
+  theme(axis.text.x = element_text(angle = 50, vjust = 1, hjust=1))+
+  stat_summary(
+    fun.data = function(x) {
+      m <- mean(x)
+      sd <- sd(x)
+      
+      c(y    = m,
+        ymin = m,
+        ymax = m)
+    }, 
+    geom="errorbar", color="#69b3a2",width=0.6, size=0.6,linetype = 1)+
+  stat_summary(fun.data = function(x) {
+    m <- mean(x)
+    sd <- sd(x)
+    
+    c(y    = m,
+      ymin = m,
+      ymax = m)
+  }, 
+  geom="point", color="#69b3a2",size=1.7)+
+  labs(y = "Individualisierbarkeit")+
+  stat_summary(fun.y = "mean", 
+               fun.ymax = function(x) mean(x) + sd(x), # calculating sd
+               fun.ymin = function(x) pmax(mean(x) - sd(x)), # calculating sd
+               geom="errorbar", color="#69b3a2",width=0.2)
+
+ggplot(stackedUEQ, aes(x=ind, y=values))+geom_boxplot(width=0.6,lwd=0.5)+geom_jitter(width=0.1)+
+  theme(axis.text.x = element_text(angle = 50, vjust = 1, hjust=1))+
+  scale_y_continuous( expand = c(0,0), limits = c(-3.2,3.2) )+
+  stat_summary(
+    fun.data = function(x) {
+      m <- mean(x)
+      sd <- sd(x)
+      
+      c(y    = m,
+        ymin = m,
+        ymax = m)
+    }, 
+    geom="errorbar", color="#69b3a2",width=0.6, size=0.6,linetype = 1)+
+  stat_summary(fun.data = function(x) {
+    m <- mean(x)
+    sd <- sd(x)
+    
+    c(y    = m,
+      ymin = m,
+      ymax = m)
+  }, 
+  geom="point", color="#69b3a2",size=1.7)+
+  scale_x_discrete(labels=c("mUEQatt" = "Attraktivität","mUEQpq" = "Pragmatische Qualität","mUEQhq" = "Hedonische Qualität"))+
+  labs(y = "Bewertung", x = "")
+
+ergAuf<-ezANOVA(data = dataISO, # Datensatz
+                dv = misoauf, # abh¨angige Variable
+                wid = ID, # Personenidentifikationsnummer
+                within_full = SG,
+                between = Erfahrung, # Gruppierungsfaktor
+                detailed = TRUE) # Quadratsummen anzeigen
+
+ergAuf2<-ezANOVA(data = dataISO, # Datensatz
+                 dv = misoauf, # abh¨angige Variable
+                 wid = ID, # Personenidentifikationsnummer
+                 within_full = SG,
+                 between = Agneserfahrung, # Gruppierungsfaktor
+                 detailed = TRUE) # Quadratsummen anzeigen
+
+UEQkeine <- subset(dataUEQ,Erfahrung=="Keine")
+UEQagnes <- subset(dataUEQ,Erfahrung=="Agnes")
+UEQandere <- subset(dataUEQ,Erfahrung=="Andere")
+UEQanderekeine <- subset(dataUEQ,Erfahrung=="Andere"|Erfahrung=="Keine")
+
+shapiro.test(UEQanderekeine$mUEQatt)
+shapiro.test(UEQagnes$mUEQatt)
+
+wilcox.test(UEQkeine$mUEQatt, UEQagnes$mUEQatt, alternative = "greater")
+wilcox.test(UEQandere$mUEQatt, UEQagnes$mUEQatt, alternative = "greater")
+wilcox.test(UEQanderekeine$mUEQatt, UEQagnes$mUEQatt, alternative = "greater")
+
+wilcox.test(UEQkeine$mUEQpq, UEQagnes$mUEQpq, alternative = "greater")
+wilcox.test(UEQandere$mUEQpq, UEQagnes$mUEQpq, alternative = "greater")
+wilcox.test(UEQanderekeine$mUEQpq, UEQagnes$mUEQpq, alternative = "greater")
+
+wilcox.test(UEQkeine$mUEQhq, UEQagnes$mUEQhq, alternative = "greater")
+wilcox.test(UEQandere$mUEQhq, UEQagnes$mUEQhq, alternative = "greater")
+wilcox.test(UEQanderekeine$mUEQhq, UEQagnes$mUEQhq, alternative = "greater")
+
+wilcox.test(UEQkeine$mUEQatt, UEQagnes$mUEQatt, alternative = "two.sided")
+wilcox.test(UEQandere$mUEQatt, UEQagnes$mUEQatt, alternative = "two.sided")
+wilcox.test(UEQanderekeine$mUEQatt, UEQagnes$mUEQatt, alternative = "two.sided")
+
+ggplot(dataUEQ, aes(x=Erfahrung, y=mUEQatt))+geom_boxplot(width=0.6,lwd=0.7)+geom_jitter(width=0.1)+
+  theme(axis.text.x = element_text(angle = 50, vjust = 1, hjust=1))+
+  scale_y_continuous( expand = c(0,0), limits = c(-3.2,3.2) )+
+  stat_summary(
+    fun.data = function(x) {
+      m <- mean(x)
+      sd <- sd(x)
+      
+      c(y    = m,
+        ymin = m,
+        ymax = m)
+    }, 
+    geom="errorbar", color="#69b3a2",width=0.6, size=0.6,linetype = 1)+
+  stat_summary(fun.data = function(x) {
+    m <- mean(x)
+    sd <- sd(x)
+    
+    c(y    = m,
+      ymin = m,
+      ymax = m)
+  }, 
+  geom="point", color="#69b3a2",size=1.7)+
+  labs(y = "Attraktivität")
+
+ggplot(dataUEQ, aes(x=Erfahrung, y=mUEQpq))+geom_boxplot(width=0.6,lwd=0.7)+geom_jitter(width=0.1)+
+  theme(axis.text.x = element_text(angle = 50, vjust = 1, hjust=1))+
+  scale_y_continuous( expand = c(0,0), limits = c(-3.2,3.2) )+
+  stat_summary(
+    fun.data = function(x) {
+      m <- mean(x)
+      sd <- sd(x)
+      
+      c(y    = m,
+        ymin = m,
+        ymax = m)
+    }, 
+    geom="errorbar", color="#69b3a2",width=0.6, size=0.6,linetype = 1)+
+  stat_summary(fun.data = function(x) {
+    m <- mean(x)
+    sd <- sd(x)
+    
+    c(y    = m,
+      ymin = m,
+      ymax = m)
+  }, 
+  geom="point", color="#69b3a2",size=1.7)+
+  labs(y = "Pragmatische Qualität")
+
+ggplot(dataUEQ, aes(x=Erfahrung, y=mUEQhq))+geom_boxplot(width=0.6,lwd=0.7)+geom_jitter(width=0.1)+
+  theme(axis.text.x = element_text(angle = 50, vjust = 1, hjust=1))+
+  scale_y_continuous( expand = c(0,0), limits = c(-3.2,3.2) )+
+  stat_summary(
+    fun.data = function(x) {
+      m <- mean(x)
+      sd <- sd(x)
+      
+      c(y    = m,
+        ymin = m,
+        ymax = m)
+    }, 
+    geom="errorbar", color="#69b3a2",width=0.6, size=0.6,linetype = 1)+
+  stat_summary(fun.data = function(x) {
+    m <- mean(x)
+    sd <- sd(x)
+    
+    c(y    = m,
+      ymin = m,
+      ymax = m)
+  }, 
+  geom="point", color="#69b3a2",size=1.7)+
+  labs(y = "Hedonische Qualität")
