@@ -504,10 +504,6 @@ wilcox.test(UEQkeine$mUEQhq, UEQagnes$mUEQhq, alternative = "greater")
 wilcox.test(UEQandere$mUEQhq, UEQagnes$mUEQhq, alternative = "greater")
 wilcox.test(UEQanderekeine$mUEQhq, UEQagnes$mUEQhq, alternative = "greater")
 
-wilcox.test(UEQkeine$mUEQatt, UEQagnes$mUEQatt, alternative = "two.sided")
-wilcox.test(UEQandere$mUEQatt, UEQagnes$mUEQatt, alternative = "two.sided")
-wilcox.test(UEQanderekeine$mUEQatt, UEQagnes$mUEQatt, alternative = "two.sided")
-
 ggplot(dataUEQ, aes(x=Erfahrung, y=mUEQatt))+geom_boxplot(width=0.6,lwd=0.7)+geom_jitter(width=0.1)+
   theme(axis.text.x = element_text(angle = 50, vjust = 1, hjust=1))+
   scale_y_continuous( expand = c(0,0), limits = c(-3.2,3.2) )+
