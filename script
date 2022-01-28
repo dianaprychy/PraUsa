@@ -43,9 +43,11 @@ tandere <- subset(data,Erfahrung=="Andere")
 tanderekeine <- subset(data,Erfahrung=="Andere"|Erfahrung=="Keine")
 
 #Signifikanztest für Bearbeitungszeit nach Gruppen (gerichtet)
-shapiro.test(tkeine$Ttotal)  
+shapiro.test(tkeine$Ttotal)
+#tkeine ist signifikant!!!
 shapiro.test(tagnes$Ttotal)
 shapiro.test(tandere$Ttotal)
+#non-parametric test (one of the distributions is significant)
 wilcox.test(tkeine$Ttotal, tagnes$Ttotal, alternative = "greater")
 wilcox.test(tandere$Ttotal, tagnes$Ttotal, alternative = "greater")
 wilcox.test(tanderekeine$Ttotal, tagnes$Ttotal, alternative = "greater")
@@ -213,8 +215,10 @@ aufagnes <- subset(dataISO,Erfahrung=="Agnes")
 aufandere <- subset(dataISO,Erfahrung=="Andere")
 aufanderekeine <- subset(dataISO,Erfahrung=="Andere"|Erfahrung=="Keine")
 
-shapiro.test(aufanderekeine$misoauf)
+shapiro.test(aufkeine$misoauf)
+shapiro.test(aufandere$misoauf)
 shapiro.test(aufagnes$misoauf)
+#alle signifikant!!!
 
 wilcox.test(aufkeine$misoauf, aufagnes$misoauf, alternative = "greater")
 wilcox.test(aufandere$misoauf, aufagnes$misoauf, alternative = "greater")
@@ -244,6 +248,10 @@ ggplot(dataISO, aes(x=Erfahrung, y=misoauf))+geom_boxplot(width=0.6,lwd=0.7)+geo
   geom="point", color="#69b3a2",size=1.7)+
   labs(y = "Aufgabenangemessenheit")
 
+shapiro.test(aufkeine$misosel)
+shapiro.test(aufandere$misosel)
+shapiro.test(aufagnes$misosel)
+#keine und agnes signifikant!!!
 
 wilcox.test(aufandere$misosel, aufagnes$misosel, alternative = "greater")
 wilcox.test(aufkeine$misosel, aufagnes$misosel, alternative = "greater")
@@ -271,6 +279,10 @@ ggplot(dataISO, aes(x=Erfahrung, y=misosel))+geom_boxplot(width=0.6,lwd=0.7)+geo
   geom="point", color="#69b3a2",size=1.7)+
   labs(y = "Selbstbeschreibungsfähigkeit")
 
+shapiro.test(aufkeine$misoerw)
+shapiro.test(aufandere$misoerw)
+shapiro.test(aufagnes$misoerw)
+#agnes signifikant!!!
 
 wilcox.test(aufandere$misoerw, aufagnes$misoerw, alternative = "greater")
 wilcox.test(aufkeine$misoerw, aufagnes$misoerw, alternative = "greater")
@@ -302,6 +314,10 @@ ggplot(dataISO, aes(x=Erfahrung, y=mIisoerw))+geom_boxplot(width=0.6,lwd=0.7)+ge
                fun.ymin = function(x) pmax(mean(x) - sd(x)), # calculating sd
                geom="errorbar", color="#69b3a2",width=0.2)
 
+shapiro.test(aufkeine$misoler)
+shapiro.test(aufandere$misoler)
+shapiro.test(aufagnes$misoler)
+#keine und agnes signifikant!!!
 
 wilcox.test(aufandere$misoler, aufagnes$misoler, alternative = "greater")
 wilcox.test(aufkeine$misoler, aufagnes$misoler, alternative = "greater")
@@ -330,6 +346,10 @@ ggplot(dataISO, aes(x=Erfahrung, y=misoler))+geom_boxplot(width=0.6,lwd=0.7)+geo
   geom="point", color="#69b3a2",size=1.7)+
   labs(y = "Lernfähigkeit")
 
+shapiro.test(aufkeine$misoste)
+shapiro.test(aufandere$misoste)
+shapiro.test(aufagnes$misoste)
+#nicht sign. (aber zu kleine Gruppen-Stichproben)
 
 wilcox.test(aufandere$misoste, aufagnes$misoste, alternative = "greater")
 wilcox.test(aufkeine$misoste, aufagnes$misoste, alternative = "greater")
@@ -361,6 +381,10 @@ ggplot(dataISO, aes(x=Erfahrung, y=misoste))+geom_boxplot(width=0.6,lwd=0.7)+geo
                fun.ymin = function(x) pmax(mean(x) - sd(x)), # calculating sd
                geom="errorbar", color="#69b3a2",width=0.2)
 
+shapiro.test(aufkeine$misofehl)
+shapiro.test(aufandere$misofehl)
+shapiro.test(aufagnes$misofehl)
+#agnes sign.
 
 wilcox.test(aufandere$misofehl, aufagnes$misofehl, alternative = "greater")
 wilcox.test(aufkeine$misofehl, aufagnes$misofehl, alternative = "greater")
@@ -391,6 +415,11 @@ ggplot(dataISO, aes(x=Erfahrung, y=misofehl))+geom_boxplot(width=0.6,lwd=0.7)+ge
                fun.ymax = function(x) mean(x) + sd(x), # calculating sd
                fun.ymin = function(x) pmax(mean(x) - sd(x)), # calculating sd
                geom="errorbar", color="#69b3a2",width=0.2)
+
+shapiro.test(aufkeine$misoind)
+shapiro.test(aufandere$misoind)
+shapiro.test(aufagnes$misoind)
+#nicht sign. (aber zu kleine Gruppen-Stichproben)
 
 wilcox.test(aufandere$misoind, aufagnes$misoind, alternative = "greater")
 wilcox.test(aufkeine$misoind, aufagnes$misoind, alternative = "greater")
@@ -456,8 +485,23 @@ UEQagnes <- subset(dataUEQ,Erfahrung=="Agnes")
 UEQandere <- subset(dataUEQ,Erfahrung=="Andere")
 UEQanderekeine <- subset(dataUEQ,Erfahrung=="Andere"|Erfahrung=="Keine")
 
+shapiro.test(UEQkeine$mUEQatt)
+shapiro.test(UEQandere$mUEQatt)
 shapiro.test(UEQanderekeine$mUEQatt)
 shapiro.test(UEQagnes$mUEQatt)
+#agnes sign. 
+
+shapiro.test(UEQkeine$mUEQpq)
+shapiro.test(UEQandere$mUEQpq)
+shapiro.test(UEQanderekeine$mUEQpq)
+shapiro.test(UEQagnes$mUEQpq)
+#keine und agnes sign. 
+
+shapiro.test(UEQkeine$mUEQhq)
+shapiro.test(UEQandere$mUEQhq)
+shapiro.test(UEQanderekeine$mUEQhq)
+shapiro.test(UEQagnes$mUEQhq)
+#keine und agnes sign. 
 
 wilcox.test(UEQkeine$mUEQatt, UEQagnes$mUEQatt, alternative = "greater")
 wilcox.test(UEQandere$mUEQatt, UEQagnes$mUEQatt, alternative = "greater")
